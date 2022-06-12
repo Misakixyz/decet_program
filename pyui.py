@@ -71,7 +71,7 @@ class Ui_MainWindow(object):
         self.label_6.setFont(font)
         self.label_6.setObjectName("label_6")
         self.Camera_widget = QtWidgets.QWidget(self.Camera)
-        self.Camera_widget.setGeometry(QtCore.QRect(620, 340, 161, 271))
+        self.Camera_widget.setGeometry(QtCore.QRect(620, 340, 211, 271))
         self.Camera_widget.setObjectName("Camera_widget")
         self.OpenCamera = QtWidgets.QPushButton(self.Camera_widget)
         self.OpenCamera.setGeometry(QtCore.QRect(10, 10, 141, 41))
@@ -80,7 +80,7 @@ class Ui_MainWindow(object):
         self.PhotoButton.setGeometry(QtCore.QRect(10, 60, 141, 31))
         self.PhotoButton.setObjectName("PhotoButton")
         self.ImportButton = QtWidgets.QPushButton(self.Camera_widget)
-        self.ImportButton.setGeometry(QtCore.QRect(10, 150, 141, 31))
+        self.ImportButton.setGeometry(QtCore.QRect(10, 150, 171, 31))
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
@@ -88,7 +88,7 @@ class Ui_MainWindow(object):
         self.ImportButton.setFont(font)
         self.ImportButton.setObjectName("ImportButton")
         self.ImgRecoButton = QtWidgets.QPushButton(self.Camera_widget)
-        self.ImgRecoButton.setGeometry(QtCore.QRect(10, 110, 141, 31))
+        self.ImgRecoButton.setGeometry(QtCore.QRect(10, 110, 171, 31))
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(True)
@@ -315,7 +315,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(2)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

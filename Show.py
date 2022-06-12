@@ -2,21 +2,17 @@ import shutil
 
 from pyui import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication, QMainWindow, QMessageBox, QInputDialog, QFileDialog
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QMessageBox, QInputDialog, QFileDialog ,QTableView
 import sys, os
 import cv2
 from threading import *
 import numpy as np
 import infer_camera
 import time
-from PyQt5.QtWidgets import (QApplication, QMessageBox, QTableView)
-from PyQt5.QtCore import Qt
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import Qt,QTimer
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery, QSqlTableModel
-from pyui import Ui_MainWindow
 import Infor_sqltools
+from qt_material import apply_stylesheet
 
 # SQL number 方便识别表头 ImgT
 ID, NAME, ADDRESS = range(3)
@@ -49,7 +45,7 @@ INclicked = 0
 # 出校关键字
 global OUTclicked
 OUTclicked = 1
-
+global photoimg
 
 # 以此方法改变参数
 # infer_camera.parser.set_defaults(threshold=0.9)
@@ -179,6 +175,10 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MyApp, self).__init__(parent)
         self.setupUi(self)
+
+        self.setWindowTitle("人脸识别") # 设置窗口名称
+        self.setWindowIcon(QtGui.QIcon("Camera.png")) # 设置程序图标
+
         # ==============SQL========↓↓↓↓↓↓↓↓↓↓↓↓↓↓========ImgT=======================
         self.createConnection()  # 链接数据库
         self.model = QSqlTableModel(self)
@@ -312,12 +312,20 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
         '''
         拍摄照片
         '''
+        global photoimg
+        global PhotoName
+        global PhotoName_OK
+        PhotoName_OK = 1
         text, ok = QInputDialog.getText(self, 'PhotoName', '输入姓名：\nID_姓名')
         if ok and text:
-            global PhotoName
             PhotoName = str(text)
-            global PhotoName_OK
-            PhotoName_OK = 1
+            imagepath = 'face_db/' + PhotoName + '.jpg'
+            add_table_item_Camera(self.CameratableWidget, PhotoName, '拍摄照片', imagepath)
+            print(imagepath)
+            cv2.imencode('.jpg', photoimg)[1].tofile(imagepath)
+            PhotoName = "溜溜"
+            p = Thread(target=reShowPredictor)
+            p.start()
             print(PhotoName)
 
     # 路径选择框
@@ -341,7 +349,7 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
             # 显示在 Imglabel上
             img = cv2.cv2.imdecode(np.fromfile(directory[0], dtype=np.uint8), -1)  # 路径含有中文 需要用imdecode
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            showimg = QtGui.QImage(img.data, img.shape[1], img.shape[0], QtGui.QImage.Format_RGB888)
+            showimg = QtGui.QImage(img.data, img.shape[1], img.shape[0],img.shape[1]*3, QtGui.QImage.Format_RGB888)
             self.Imglabel.setPixmap(QtGui.QPixmap.fromImage(showimg))
         else:
             return
@@ -350,6 +358,10 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
     def open_camera(self):
         if not self.timer_camera.isActive():
             flag = self.cap.open(self.CAM_NUM, cv2.CAP_DSHOW)
+            self.cap.set(6, cv2.VideoWriter.fourcc('M', 'J', 'P', 'G'))  # 读入mjpg
+            self.cap.set(5, 30)  # 帧率
+            self.cap.set(3, 1280)  # 帧宽
+            self.cap.set(4, 720)  # 帧高
             if not flag:
                 pass
             else:
@@ -366,14 +378,16 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
             self.OpenCamera.setText('打开摄像头')
             add_table_item_Camera(self.CameratableWidget, 'master', '关闭摄像头', -2)
             self.CS_label.setText('关闭')
-
+    def take_Photo(self):
+        pass
     # 调用摄像头
     def show_camera(self):
         global PhotoName
         global PhotoName_OK
         global ShowPredictor
+        global photoimg
         flag, image = self.cap.read()
-        img = cv2.resize(image, (320, 240))
+        img = cv2.resize(image, (500, 300))
         # img = HSVAlgorithm(img, 0.5, True)
         # 检测人脸
         '''
@@ -383,25 +397,27 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
             '''
             拍摄人脸并存储于face_db
             '''
+            photoimg = img
+            PhotoName_OK = 0
             print(PhotoName)
             # cv2.imwrite('face_db/' + PhotoName + '.jpg', img) #使用imwrite输入中文会乱码
-            imagepath = 'face_db/' + PhotoName + '.jpg'
-            add_table_item_Camera(self.CameratableWidget, PhotoName, '拍摄照片', imagepath)
-            print(imagepath)
-            cv2.imencode('.jpg', img)[1].tofile(imagepath)
-            PhotoName = "溜溜"
-            PhotoName_OK = 0
-            p = Thread(target=reShowPredictor)
-            p.start()
-            img = cv2.cv2.imdecode(np.fromfile(imagepath, dtype=np.uint8), -1)  # 路径含有中文 需要用imdecode
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA)
+            # imagepath = 'face_db/' + PhotoName + '.jpg'
+            # add_table_item_Camera(self.CameratableWidget, PhotoName, '拍摄照片', imagepath)
+            # print(imagepath)
+            # cv2.imencode('.jpg', img)[1].tofile(imagepath)
+            # PhotoName = "溜溜"
+            # p = Thread(target=reShowPredictor)
+            # p.start()
+            # img = cv2.imdecode(np.fromfile(imagepath, dtype=np.uint8), -1)  # 路径含有中文 需要用imdecode
+            phtotimg = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
             '''
             将拍下的人脸显示在lable中
             '''
-            img = img_resize(img)
-            showimg = QtGui.QImage(img.data, img.shape[1], img.shape[0], QtGui.QImage.Format_RGBA8888)
-            self.Imglabel.setPixmap(QtGui.QPixmap.fromImage(showimg))
+            phtotimg = img_resize(phtotimg)
+            phtotshowimg = QtGui.QImage(phtotimg.data, phtotimg.shape[1], phtotimg.shape[0],phtotimg.shape[1]*3, QtGui.QImage.Format_RGB888)
+            self.Imglabel.setPixmap(QtGui.QPixmap.fromImage(phtotshowimg))
+            # return
         '''
         视频识别
         '''
@@ -443,7 +459,9 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
             print('预测的人脸位置：', boxes.astype('int32').tolist())
             print('识别的人脸名称：', names)
             print('总识别时间：%dms' % int((time.time() - start) * 1000))
+        # img = img_resize(img)
         # opencv格式不能直接显示，需要用下面代码转换一下
+        # img = img_resize(img)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA)
         showImage = QtGui.QImage(img.data, img.shape[1], img.shape[0], QtGui.QImage.Format_RGBA8888)
         self.Streamlabel.setPixmap(QtGui.QPixmap.fromImage(showImage))
@@ -506,7 +524,7 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
                     print('总识别时间：%dms' % int((time.time() - start) * 1000))
                 # opencv格式不能直接显示，需要用下面代码转换一下
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGBA)
-                showImage = QtGui.QImage(img.data, img.shape[1], img.shape[0], QtGui.QImage.Format_RGBA8888)
+                showImage = QtGui.QImage(img.data, img.shape[1], img.shape[0],img.shape[1]*3, QtGui.QImage.Format_RGBA8888)
                 self.Streamlabel.setPixmap(QtGui.QPixmap.fromImage(showImage))
             else:
                 return
@@ -551,8 +569,8 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
         初始化表头宽度，查询后要重新添加
         '''
         self.DataBasetableView.setColumnWidth(ID, 70)  # 设置 表头“id”宽度
-        self.DataBasetableView.setColumnWidth(NAME, 150)  # 设置 表头“NAME”宽度
-        self.DataBasetableView.setColumnWidth(ADDRESS, 250)  # 设置 表头“ADDRESS”宽度
+        self.DataBasetableView.setColumnWidth(NAME, 120)  # 设置 表头“NAME”宽度
+        self.DataBasetableView.setColumnWidth(ADDRESS, 220)  # 设置 表头“ADDRESS”宽度
         self.DataBasetableView.setSelectionMode(QTableView.SingleSelection)
         self.DataBasetableView.setSelectionBehavior(QTableView.SelectRows)
         self.DataBasetableView.scrollToBottom()
@@ -570,8 +588,8 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.DataBasetableView.setModel(self.model)
         self.DataBasetableView.setColumnWidth(ID, 70)  # 设置 表头“id”宽度
-        self.DataBasetableView.setColumnWidth(NAME, 150)  # 设置 表头“NAME”宽度
-        self.DataBasetableView.setColumnWidth(ADDRESS, 250)  # 设置 表头“ADDRESS”宽度
+        self.DataBasetableView.setColumnWidth(NAME, 120)  # 设置 表头“NAME”宽度
+        self.DataBasetableView.setColumnWidth(ADDRESS, 220)  # 设置 表头“ADDRESS”宽度
         self.DataBasetableView.setSelectionMode(QTableView.SingleSelection)
         self.DataBasetableView.setSelectionBehavior(QTableView.SelectRows)
 
@@ -664,7 +682,7 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
             self.model.fetchMore()
         id_text = self.id_lineEdit.text()
         print(id_text)
-        self.model.setTable('ImgT')
+        # self.model.setTable('ImgT')
         self.model.setFilter("ID ='%s'" % id_text)  # 过滤
         self.DataBasetableView.setModel(self.model)
         self.model.select()
@@ -680,7 +698,7 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
             self.model.fetchMore()
         name_text = self.name_lineEdit.text()
         print(name_text)
-        self.model.setTable('ImgT')
+        # self.model.setTable('ImgT')
         self.model.setFilter("NAME ='%s'" % name_text)  # 过滤
         self.DataBasetableView.setModel(self.model)
         self.model.select()
@@ -721,13 +739,16 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
 
             img = cv2.cvtColor(img_path, cv2.COLOR_BGR2RGB)
             img = img_resize(img)
-            showimg = QtGui.QImage(img.data, img.shape[1], img.shape[0], QtGui.QImage.Format_RGB888)
+            showimg = QtGui.QImage(img.data, img.shape[1], img.shape[0],img.shape[1]*3, QtGui.QImage.Format_RGB888)
             self.dataImglabel.setPixmap(QtGui.QPixmap.fromImage(showimg))
         except:
             print('error')
 
     def scanAll_DataBase(self):
         files = os.listdir('face_db')
+        self.deleteAll()
+        while self.model.canFetchMore():
+            self.model.fetchMore()
         for file in files:
             if '_' not in file:
                 continue
@@ -735,6 +756,10 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
             name = file.split('.')[0].split('_')[-1]
             file_d = os.path.join('face_db/', file)  # 路径+文件名
 
+            # self.model.setFilter("ID ='%s'" % id)  # id过滤
+            # self.model.select()
+            # recordRow = self.model.rowCount()
+            # if recordRow == 0:
             row = self.model.rowCount()
             self.model.insertRow(row)
             self.model.setData(self.model.index(row, 0), id)
@@ -742,6 +767,8 @@ class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
             self.model.setData(self.model.index(row, 2), file_d)
             index = self.model.index(row, ID)
             self.DataBasetableView.setCurrentIndex(index)
+            self.modltable_init()
+        add_table_item_DataBase(self.DataBasetableWidget, '扫描全表', '--')
 
     # =============================SQL=========DataBase===========================================
 
@@ -750,6 +777,8 @@ if __name__ == '__main__':
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)  # 适配2k屏幕
     app = QtWidgets.QApplication(sys.argv)
     mainWindow = MyApp()
+
+    apply_stylesheet(app, theme='dark_teal.xml') # 使用样式
 
     mainWindow.show()  # 显示mainWindow
     sys.exit(app.exec_())  # 关闭窗口

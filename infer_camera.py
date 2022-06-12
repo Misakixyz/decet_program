@@ -13,7 +13,7 @@ from utils.utils import add_arguments, print_arguments
 
 parser = argparse.ArgumentParser(description=__doc__)
 add_arg = functools.partial(add_arguments, argparser=parser)
-add_arg('camera_id', int, 0, '使用的相机ID')
+add_arg('camera_id', int, 1, '使用的相机ID')
 add_arg('face_db_path', str, 'face_db', '人脸库路径')
 add_arg('threshold', float, 0.6, '判断相识度的阈值')
 add_arg('mobilefacenet_model_path', str, 'save_model/mobilefacenet.pth', 'MobileFaceNet预测模型的路径')
@@ -129,15 +129,15 @@ class Predictor:
                 print(corpbbox)
                 # 画人脸框
                 cv2.rectangle(img, (corpbbox[0], corpbbox[1]),
-                              (corpbbox[2], corpbbox[3]), (255, 0, 0), 1)
+                              (corpbbox[2], corpbbox[3]), (0, 255, 0), 1)
                 # 判别为人脸的名字
-                img = self.add_text(img, name, corpbbox[0], corpbbox[1] - 15, color=(0, 0, 255), size=12)
+                img = self.add_text(img, name, corpbbox[0], corpbbox[1] - 15, color=(0, 255, 0), size=18)
                 print(name)
         return img
 
 
-ShowPredictor = Predictor(args.mtcnn_model_path, args.mobilefacenet_model_path, args.face_db_path,
-                          threshold=args.threshold)
+# ShowPredictor = Predictor(args.mtcnn_model_path, args.mobilefacenet_model_path, args.face_db_path,
+#                           threshold=args.threshold)
 
 if __name__ == '__main__':
     predictor = Predictor(args.mtcnn_model_path, args.mobilefacenet_model_path, args.face_db_path,

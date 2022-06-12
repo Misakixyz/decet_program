@@ -1,10 +1,8 @@
 # == == == == == == == == == == == == == == =SQL == == == == = Information == == == == == == == == == == == == == == == == == == == == == =
 import cv2
 import numpy as np
-from PyQt5.QtSql import QSqlTableModel
-from PyQt5.QtWidgets import QMessageBox, QTableView
-from pyqt5_plugins.examplebuttonplugin import QtGui
-from PyQt5 import QtCore, QtGui, QtWidgets, QtSql
+from PyQt5.QtWidgets import  QTableView
+from PyQt5 import  QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 
 import datetime
@@ -62,8 +60,8 @@ def modltable_init(model, tableView):
 
     tableView.setColumnWidth(st_ID, 70)  # 设置 表头“st_ID”宽度
     tableView.setColumnWidth(st_NAME, 100)  # 设置 表头“st_NAME”宽度
-    tableView.setColumnWidth(st_TIME, 215)  # 设置 表头“st_TIME”宽度
-    tableView.setColumnWidth(st_IOSTATE, 80)  # 设置 表头“st_IOSTATE”宽度
+    tableView.setColumnWidth(st_TIME, 180)  # 设置 表头“st_TIME”宽度
+    tableView.setColumnWidth(st_IOSTATE, 100)  # 设置 表头“st_IOSTATE”宽度
     tableView.setColumnWidth(st_ADDRESS, 250)  # 设置 表头“st_ADDRESS”宽度
     tableView.setColumnHidden(st_ADDRESS, True)  # 隐藏st_ADDRESS列
     tableView.setSelectionMode(QTableView.SingleSelection)
@@ -76,8 +74,8 @@ def table_init(tableView):
     '''
     tableView.setColumnWidth(st_ID, 70)  # 设置 表头“st_ID”宽度
     tableView.setColumnWidth(st_NAME, 100)  # 设置 表头“st_NAME”宽度
-    tableView.setColumnWidth(st_TIME, 215)  # 设置 表头“st_TIME”宽度
-    tableView.setColumnWidth(st_IOSTATE, 80)  # 设置 表头“st_IOSTATE”宽度
+    tableView.setColumnWidth(st_TIME, 180)  # 设置 表头“st_TIME”宽度
+    tableView.setColumnWidth(st_IOSTATE, 100)  # 设置 表头“st_IOSTATE”宽度
     tableView.setColumnWidth(st_ADDRESS, 250)  # 设置 表头“st_ADDRESS”宽度
     tableView.setColumnHidden(st_ADDRESS, True)  # 隐藏st_ADDRESS列
 
@@ -215,7 +213,6 @@ def id_searchRecord(model, tableView, tableWidget, id_lineEdit):
     while model.canFetchMore():
         model.fetchMore()
     id_text = id_lineEdit.text()
-    model.setTable('STIO')
     model.setFilter("st_ID ='%s'" % id_text)  # 过滤
     tableView.setModel(model)
     model.select()
@@ -232,7 +229,6 @@ def name_searchRecord(model, tableView, tableWidget, name_lineEdit):
         model.fetchMore()
     name_text = name_lineEdit.text()
     print(name_text)
-    model.setTable('STIO')
     model.setFilter("st_NAME ='%s'" % name_text)  # 过滤
     tableView.setModel(model)
     model.select()
@@ -275,7 +271,7 @@ def tableview_clicked(model, tableView, tableWidget, label):
 
         img = cv2.cvtColor(img_path, cv2.COLOR_BGR2RGB)
         img = img_resize(img)
-        showimg = QtGui.QImage(img.data, img.shape[1], img.shape[0], QtGui.QImage.Format_RGB888)
+        showimg = QtGui.QImage(img.data, img.shape[1], img.shape[0],img.shape[1]*3, QtGui.QImage.Format_RGB888)
         label.setPixmap(QtGui.QPixmap.fromImage(showimg))
     except:
         print('error')
